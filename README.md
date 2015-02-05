@@ -47,7 +47,7 @@ Don't submit the form if submit button is disabled.
 ###### Type new password and confirm it
 
 ```html
-div class="b-form-field">
+<div class="b-form-field">
   <input type="password" name="PASS" value="" data-equal="pass"">
 </div>
 div class="b-form-field">
@@ -58,7 +58,7 @@ div class="b-form-field">
 ###### Type login or email
 
 ```html
-div class="b-form-field">
+<div class="b-form-field">
   <input type="text" name="LOGIN" value="" data-or="login"">
 </div>
 div class="b-form-field">
