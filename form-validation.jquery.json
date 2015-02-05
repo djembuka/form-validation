@@ -1,0 +1,26 @@
+{
+  "name": "form-validation",
+  "title": "Form Validation",
+  "description": "A simple plugint to validate form with options of fields' values equality, or-equality, varifying email-tel types, etc.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/djembuka/form-validation",
+  "author": {
+    "name": "Tatiana",
+    "email": "kartasheva.tatiana@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djembuka/form-validation"
+  },
+  "bugs": "https://github.com/djembuka/form-validation/issues",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/djembuka/form-validation/blob/master/LICENSE-MIT"
+    }
+  ],
+  "dependencies": {
+    "jquery": "*"
+  },
+  "keywords": []
+}

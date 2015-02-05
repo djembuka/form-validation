@@ -1,5 +1,15 @@
+/*
+ * form-validation
+ * https://github.com/djembuka/form-validation
+ *
+ * Copyright (c) 2015 Tatiana
+ * Licensed under the MIT license.
+ */
+
 ( function($) {
-  $.fn.form = function() {
+  'use strict';
+  
+  $.fn.form_validation = function() {
     return this.each( function() {
       var $this = $( this );
       
@@ -7,7 +17,7 @@
         return;
       }
       
-      $this.instance = new Form( this );
+      new Form( this );
     });
   };
 
@@ -39,6 +49,15 @@
     var self = $( e.target ).data( 'Form' );
     if ( self.$submitButton.hasClass( 'i-disabled' ) || !self.isValid() ) {
       e.preventDefault();
+      
+      //for unit tests
+      self.testFlag = self.testFlag ? 'prevent submition' : undefined;
+      return;
+    }
+    
+    if ( self.testFlag ) {
+      self.testFlag = 'form submition';
+      e.preventDefault();
     }
   };
 
@@ -65,8 +84,6 @@
   Form.prototype.isValid = function() {
     var self = this;
     
-    return check();
-    
     function check() {
       self.submitFlag = 0;
       self.firstElement = undefined;
@@ -83,7 +100,9 @@
       var scrolled = window.pageYOffset || document.documentElement.scrollTop;
       if ((self.firstElement.offset().top - scrolled) < 0) {
         var top = self.firstElement.offset().top - 50;
-        $.scrollTo( top, 500 );
+        if ( $.scrollTo ) {
+          $.scrollTo( top, 500 );
+        }
         if(self.firstElement !== undefined) {
           self.firstElement.focus();
         }
@@ -103,7 +122,7 @@
       });
       
       var flag;
-      $.each( orFieldsObject, function( key, value ) {
+      $.each( orFieldsObject, function( key ) {
         flag = true;
         
         var value = $.trim($(orFieldsObject[key][0]).val());
@@ -165,11 +184,6 @@
     }
     
     function checkSpecialTypes() {
-      checkPasswordType();
-      checkEmailType();
-      checkTelType();
-      checkNumberType();
-      checkUrlType();
       
       function checkPasswordType() {
         self.$elem.find("input:visible[type=password]").each(function() {
@@ -178,10 +192,9 @@
             num = 6;
           
           if ($val.length < num) {
-            self.setWarning($field);
-          }
-          else {
-            self.removeWarning($field);
+            self.setWarning( $field );
+          } else {
+            self.removeWarning( $field );
           }
         });
       }
@@ -194,8 +207,7 @@
           
           if ($val !== "" && !mailRegex.test($val)) {
             self.setWarning($field);
-          }
-          else {
+          } else {
             self.removeWarning($field);
           }
         });
@@ -209,8 +221,7 @@
           
           if ($val !== "" && !phoneRegex.test($val)) {
             self.setWarning($field);
-          }
-          else {
+          } else {
             self.removeWarning($field);
           }
         });
@@ -220,12 +231,11 @@
         self.$elem.find("[type=number]").each(function() {
           var $field = $(this),
             $val = $.trim($field.val()),
-            numRegex = /^([0-9\s\.,]+)$/i;
+            numRegex = /^([0-9\s\.,]+){5,}$/i;
           
           if ($val !== "" && !numRegex.test($val)) {
             self.setWarning($field);
-          }
-          else {
+          } else {
             self.removeWarning($field);
           }
         });
@@ -235,16 +245,21 @@
         self.$elem.find("[type=url]").each(function() {
           var $field = $(this),
             $val = $.trim($field.val()),
-            urlRegex = /^((https?:\/\/)?(www\.)?([-a-z0-9]+\.)+[a-z]{2,})$/i;
+            urlRegex = /^((https?:\/\/)?(www\.)?([-a-z0-9]+\.)+[a-z]{2,}(\/[-\w]+)?(\/[-\w]+\.[a-z]{2,})?\/?(#[-\w]+)?(\?[-\w=&]+)?)$/i;
           
           if ($val !== "" && !urlRegex.test($val)) {
             self.setWarning($field);
-          }
-          else {
+          } else {
             self.removeWarning($field);
           }
         });
       }
+      
+      checkPasswordType();
+      checkEmailType();
+      checkTelType();
+      checkNumberType();
+      checkUrlType();
       
     }
     
@@ -260,7 +275,7 @@
       });
       
       var counter;
-      for(var key in orFieldsObject) {
+      $.each( orFieldsObject, function( key ) {
         counter = 0;
         
         orFieldsObject[key].each(function() {
@@ -279,7 +294,9 @@
             self.removeWarning($(this));
           });
         }
-      }
+      });
     }
+    
+    return check();
   };
 }( jQuery ));
