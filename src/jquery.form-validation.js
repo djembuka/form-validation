@@ -10,18 +10,29 @@
   'use strict';
   
   $.fn.form_validation = function() {
+    
+    var defaults = {
+      inputTextClass: 'b-input-text',
+      inputCheckboxClass: 'b-checkbox',
+      fieldBoxClass: 'b-form-field',
+      warningClass: 'i-warning',
+      disabledClass: 'i-disabled'
+    };
+    
     return this.each( function() {
-      var $this = $( this );
+      var $this = $( this ),
+          options = $.extend( {}, defaults );
       
       if ( $this.data( 'Form' ) ) {
         return;
       }
       
-      new Form( this );
+      new Form( this, options );
     });
   };
 
-  function Form( elem ) {
+  function Form( elem, options ) {
+    this.options = options;
     this.init( elem );
   }
 
@@ -36,7 +47,7 @@
     //handle events
     this.$submitButton.click( this.clickSubmitButton );
     this.$elem.submit( this.submitForm );
-    this.$elem.find( '.b-input-text' ).focus( this.focusElement );
+    this.$elem.find( '.' + this.options.inputTextClass ).focus( this.focusElement );
   };
 
   Form.prototype.clickSubmitButton = function(e) {
@@ -47,7 +58,7 @@
 
   Form.prototype.submitForm = function(e) {
     var self = $( e.target ).data( 'Form' );
-    if ( self.$submitButton.hasClass( 'i-disabled' ) || !self.isValid() ) {
+    if ( self.$submitButton.hasClass( self.options.disabledClass ) || !self.isValid() ) {
       e.preventDefault();
       
       //for unit tests
@@ -68,8 +79,8 @@
   };
 
   Form.prototype.setWarning = function( $elem ) {
-    $elem.closest( '.b-form-field' ).addClass( 'i-warning' );
-    $elem.closest( '.b-checkbox' ).addClass( 'i-warning' );
+    $elem.closest( '.' + this.options.fieldBoxClass ).addClass( this.options.warningClass );
+    $elem.closest( '.' + this.options.inputCheckboxClass ).addClass( this.options.warningClass );
     
     if ( this.submitFlag === 0 ) {
       this.firstElement = $elem;
@@ -78,7 +89,7 @@
   };
 
   Form.prototype.removeWarning = function( $elem ) {
-    $elem.closest( '.b-form-field' ).removeClass( 'i-warning' );
+    $elem.closest( '.' + this.options.fieldBoxClass ).removeClass( this.options.warningClass );
   };
 
   Form.prototype.isValid = function() {
@@ -160,7 +171,7 @@
             val = $.trim( $field.val() );
         
         if ( $field.is( 'input:radio' )) {
-          if ( $field.closest( '.b-form-field' ).find( 'input:checked' ).length === 0 ) {
+          if ( $field.closest( '.' + self.options.fieldBoxClass ).find( 'input:checked' ).length === 0 ) {
             self.setWarning( $field );
           }
         } else if ( $field.is( 'input:checkbox' )) {
