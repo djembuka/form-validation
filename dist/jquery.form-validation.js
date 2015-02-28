@@ -1,22 +1,33 @@
-/*! Form Validation - v0.1.0 - 2015-02-05
+/*! Form Validation - v0.1.0 - 2015-02-28
 * https://github.com/djembuka/form-validation
 * Copyright (c) 2015 Tatiana; Licensed MIT */
 ( function($) {
   'use strict';
   
   $.fn.form_validation = function() {
+    
+    var defaults = {
+      inputTextClass: 'b-input-text',
+      inputCheckboxClass: 'b-checkbox',
+      fieldBoxClass: 'b-form-field',
+      warningClass: 'i-warning',
+      disabledClass: 'i-disabled'
+    };
+    
     return this.each( function() {
-      var $this = $( this );
+      var $this = $( this ),
+          options = $.extend( {}, defaults );
       
-      if ( $this.instance ) {
+      if ( $this.data( 'Form' ) ) {
         return;
       }
       
-      new Form( this );
+      new Form( this, options );
     });
   };
 
-  function Form( elem ) {
+  function Form( elem, options ) {
+    this.options = options;
     this.init( elem );
   }
 
@@ -31,7 +42,7 @@
     //handle events
     this.$submitButton.click( this.clickSubmitButton );
     this.$elem.submit( this.submitForm );
-    this.$elem.find( '.b-input-text' ).focus( this.focusElement );
+    this.$elem.find( '.' + this.options.inputTextClass ).focus( this.focusElement );
   };
 
   Form.prototype.clickSubmitButton = function(e) {
@@ -42,7 +53,7 @@
 
   Form.prototype.submitForm = function(e) {
     var self = $( e.target ).data( 'Form' );
-    if ( self.$submitButton.hasClass( 'i-disabled' ) || !self.isValid() ) {
+    if ( self.$submitButton.hasClass( self.options.disabledClass ) || !self.isValid() ) {
       e.preventDefault();
       
       //for unit tests
@@ -63,8 +74,8 @@
   };
 
   Form.prototype.setWarning = function( $elem ) {
-    $elem.closest( '.b-form-field' ).addClass( 'i-warning' );
-    $elem.closest( '.b-checkbox' ).addClass( 'i-warning' );
+    $elem.closest( '.' + this.options.fieldBoxClass ).addClass( this.options.warningClass );
+    $elem.closest( '.' + this.options.inputCheckboxClass ).addClass( this.options.warningClass );
     
     if ( this.submitFlag === 0 ) {
       this.firstElement = $elem;
@@ -73,13 +84,14 @@
   };
 
   Form.prototype.removeWarning = function( $elem ) {
-    $elem.closest( '.b-form-field' ).removeClass( 'i-warning' );
+    $elem.closest( '.' + this.options.fieldBoxClass ).removeClass( this.options.warningClass );
   };
 
   Form.prototype.isValid = function() {
     var self = this;
     
     function check() {
+      var top;
       self.submitFlag = 0;
       self.firstElement = undefined;
       
@@ -88,105 +100,102 @@
       checkEqual();
       checkEmpty();
       
-      if (self.submitFlag === 0) {
+      if ( self.submitFlag === 0 ) {
         return true;
       }
       
-      var scrolled = window.pageYOffset || document.documentElement.scrollTop;
-      if ((self.firstElement.offset().top - scrolled) < 0) {
-        var top = self.firstElement.offset().top - 50;
-        if ( $.scrollTo ) {
-          $.scrollTo( top, 500 );
-        }
-        if(self.firstElement !== undefined) {
-          self.firstElement.focus();
+      if ( self.firstElement ) {
+        self.firstElement.focus();
+        
+        if ( !isFirstElementVisible() ) {
+          top = self.firstElement.offset().top - 50;
+          scrollToTop( top );
         }
       }
       return false;						
     }
     
+    function scrollToTop( top ) {
+      if ( $.scrollTo ) {
+        $.scrollTo( top, 500 );
+      } else if ( window.scroll ) {
+        window.scroll( 0, top );
+      } else if ( document.documentElement.scrollTop ) {
+        document.documentElement.scrollTop = top;
+      }
+    }
+    
+    function isFirstElementVisible() {
+      var scrolled = window.pageYOffset || document.documentElement.scrollTop;
+      return (self.firstElement.offset().top - scrolled) >= 0;
+    }
+    
     function checkEqual() {
       var orFieldsObject = {};
-      self.$elem.find("[data-equal]").each(function() {
-        var $filed = $(this),
-          data = $filed.attr("data-equal");
           
-        if(!orFieldsObject[data]) {
-          orFieldsObject[data] = self.$elem.find("[data-equal=" + data + "]");
+      self.$elem.find( '[data-equal]' ).each( function() {
+        var $filed = $( this ),
+            data = $filed.data( 'equal' );
+          
+        if ( !orFieldsObject[ data ]) {
+          orFieldsObject[ data ] = self.$elem.find( '[data-equal=' + data + ']' );
         }
       });
       
-      var flag;
       $.each( orFieldsObject, function( key ) {
-        flag = true;
-        
-        var value = $.trim($(orFieldsObject[key][0]).val());
-        orFieldsObject[key].each(function() {
-          if($.trim($(this).val()) !== value) {
+        var flag = true,
+            value = $.trim( $( orFieldsObject[ key ][0] ).val() ),
+            method;
+            
+        orFieldsObject[ key ].each( function() {
+          if ( $.trim( $( this ).val() ) !== value ) {
             flag = false;
           }
         });
         
-        if(!flag) {
-          orFieldsObject[key].each(function() {
-            self.setWarning($(this));
-          });
-        }
-        else {
-          orFieldsObject[key].each(function() {
-            self.removeWarning($(this));
-          });
-        }
+        method = ( flag === false ) ? 'setWarning' : 'removeWarning';
+        orFieldsObject[ key ].each( function() {
+          self[ method ]( $( this ));
+        });
       });
     }
     
     function checkEmpty() {
-      self.$elem.find(".b-select.i-required").each(function() {
-        if($(this).find("input:hidden").val() === "") {
-          self.setWarning($(this));
-        } else {
-          self.removeWarning($(this));
-        }
-      });
-      self.$elem.find("[required]").each(function() {
-        var $field = $(this),
-          $val = $.trim($field.val());
+      self.$elem.find( '[required]' ).each( function() {
+        var $field = $( this ),
+            val = $.trim( $field.val() );
         
-        if ($field.is("[type=radio]")) {
-          if($field.closest(".b-form-field").find("input:checked").size() === 0) {
-            self.setWarning($field);
+        if ( $field.is( 'input:radio' )) {
+          if ( $field.closest( '.' + self.options.fieldBoxClass ).find( 'input:checked' ).length === 0 ) {
+            self.setWarning( $field );
           }
-        }
-        else if ($field.is("[type=checkbox]")) {
-          if(!$field.is(":checked")) {
-            self.setWarning($field);
+        } else if ( $field.is( 'input:checkbox' )) {
+          if ( !$field.is( ':checked' )) {
+            self.setWarning( $field );
           } else {
-            self.removeWarning($field);
+            self.removeWarning( $field );
           }
-        }
-        else if ($field.is("[data-equal]")) {
-          if($.trim($field.val()) === "") {
-            self.setWarning($field);
+        } else if ( $field.is( '[data-equal]' )) {
+          if ( val === '' ) {
+            self.setWarning( $field );
           }
-        }
-        else if ($val === "") {
-          self.setWarning($field);
-        }
-        else if(!$field.is("[type=email]") && !$field.is("[type=tel]") && !$field.is("[type=number]") && !$field.is("[type=url]")) {
-          self.removeWarning($field);
+        } else if ( val === '' ) {
+          self.setWarning( $field );
+        } else if( !$field.is( '[type=email]' ) && !$field.is( '[type=tel]' ) && !$field.is( '[type=number]' ) && !$field.is( '[type=url]' )) {
+          self.removeWarning( $field );
         }
       });
     }
     
     function checkSpecialTypes() {
+      var selector, regExp;
       
-      function checkPasswordType() {
-        self.$elem.find("input:visible[type=password]").each(function() {
-          var $field = $(this),
-            $val = $.trim($field.val()),
-            num = 6;
+      function useRegExp( selector, regExp ) {
+        self.$elem.find( selector ).each( function() {
+          var $field = $( this ),
+            val = $.trim( $field.val() );
           
-          if ($val.length < num) {
+          if ( val !== '' && !regExp.test( val )) {
             self.setWarning( $field );
           } else {
             self.removeWarning( $field );
@@ -194,101 +203,67 @@
         });
       }
       
-      function checkEmailType() {
-        self.$elem.find("[type=email]").each(function() {
-          var $field = $(this),
-            $val = $.trim($field.val()),
-            mailRegex = /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i;
-          
-          if ($val !== "" && !mailRegex.test($val)) {
-            self.setWarning($field);
-          } else {
-            self.removeWarning($field);
-          }
-        });
-      }
+      //check password
+      self.$elem.find( 'input:visible:password' ).each( function() {
+        var $field = $( this ),
+          val = $.trim( $field.val() ),
+          maxLength = 6;
+        
+        if ( val.length < maxLength ) {
+          self.setWarning( $field );
+        } else {
+          self.removeWarning( $field );
+        }
+      });
       
-      function checkTelType() {
-        self.$elem.find("[type=tel]").each(function() {
-          var $field = $(this),
-            $val = $.trim($field.val()),
-            phoneRegex = /^([0-9-()\++\s]{5,})$/i;
-          
-          if ($val !== "" && !phoneRegex.test($val)) {
-            self.setWarning($field);
-          } else {
-            self.removeWarning($field);
-          }
-        });
-      }
+      //check email type
+      selector = '[type=email]';
+      regExp = /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i;
+      useRegExp( selector, regExp );
       
-      function checkNumberType() {
-        self.$elem.find("[type=number]").each(function() {
-          var $field = $(this),
-            $val = $.trim($field.val()),
-            numRegex = /^([0-9\s\.,]+){5,}$/i;
-          
-          if ($val !== "" && !numRegex.test($val)) {
-            self.setWarning($field);
-          } else {
-            self.removeWarning($field);
-          }
-        });
-      }
+      //check tel type
+      selector = '[type=tel]';
+      regExp = /^([0-9-()\++\s]{5,})$/i;
+      useRegExp( selector, regExp );
       
-      function checkUrlType() {
-        self.$elem.find("[type=url]").each(function() {
-          var $field = $(this),
-            $val = $.trim($field.val()),
-            urlRegex = /^((https?:\/\/)?(www\.)?([-a-z0-9]+\.)+[a-z]{2,}(\/[-\w]+)?(\/[-\w]+\.[a-z]{2,})?\/?(#[-\w]+)?(\?[-\w=&]+)?)$/i;
-          
-          if ($val !== "" && !urlRegex.test($val)) {
-            self.setWarning($field);
-          } else {
-            self.removeWarning($field);
-          }
-        });
-      }
+      //check number type
+      selector = '[type=number]';
+      regExp = /^([0-9\s\.,]+)$/i;
+      useRegExp( selector, regExp );
       
-      checkPasswordType();
-      checkEmailType();
-      checkTelType();
-      checkNumberType();
-      checkUrlType();
+      //check url type
+      selector = '[type=url]';
+      regExp = /^((https?:\/\/)?(www\.)?([-a-z0-9]+\.)+[a-z]{2,}(\/[-\w]+)?(\/[-\w]+\.[a-z]{2,})?\/?(#[-\w]+)?(\?[-\w=&]+)?)$/i;
+      useRegExp( selector, regExp );
       
     }
     
     function checkRequiredOr() {
       var orFieldsObject = {};
-      self.$elem.find("[data-or]").each(function() {
-        var $filed = $(this),
-          data = $filed.attr("data-or");
+      
+      self.$elem.find( '[data-or]' ).each( function() {
+        var $filed = $( this ),
+          data = $filed.attr( 'data-or' );
           
-        if(!orFieldsObject[data]) {
-          orFieldsObject[data] = self.$elem.find("[data-or=" + data + "]");
+        if ( !orFieldsObject[ data ]) {
+          orFieldsObject[ data ] = self.$elem.find( '[data-or=' + data + ']' );
         }							
       });
       
-      var counter;
       $.each( orFieldsObject, function( key ) {
-        counter = 0;
+        var counter = 0,
+            method;
         
-        orFieldsObject[key].each(function() {
-          if($.trim($(this).val()) !== "") {
+        orFieldsObject[ key ].each( function() {
+          if ( $.trim( $( this ).val() ) !== '' ) {
             counter++;
           }
         });
         
-        if(counter === 0) {
-          orFieldsObject[key].each(function() {
-            self.setWarning($(this));
-          });
-        }
-        else {
-          orFieldsObject[key].each(function() {
-            self.removeWarning($(this));
-          });
-        }
+        method = ( counter === 0 ) ? 'setWarning' : 'removeWarning';
+        orFieldsObject[ key ].each( function() {
+          self[ method ]( $( this ));
+        });
       });
     }
     

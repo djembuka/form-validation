@@ -51,7 +51,27 @@ module.exports = function(grunt) {
         src: ['test/**/*.js']
       },
     },
+    jade: {
+      demo: {
+        files: {
+          'dist/demo/index.html': 'src/demo/index.jade'
+        }
+      }
+    },
+    stylus: {
+      options: {
+        compress: false
+      },
+      demo: {
+        files: {
+          'dist/demo/styles.css': 'src/demo/styles.styl'
+        }
+      }
+    },
     watch: {
+      options: {
+        livereload: true
+      },
       gruntfile: {
         files: '<%= jshint.gruntfile.src %>',
         tasks: ['jshint:gruntfile']
@@ -64,7 +84,25 @@ module.exports = function(grunt) {
         files: '<%= jshint.test.src %>',
         tasks: ['jshint:test', 'qunit']
       },
+      demo: {
+        files: 'src/demo/index.jade',
+        tasks: ['jade']
+      },
+      css: {
+        files: 'src/demo/styles.styl',
+        tasks: ['stylus']
+      }
     },
+    
+    connect: {
+      server: {
+        options: {
+          port: 3000,
+          livereload: true,
+          base: './dist/demo'
+        }
+      }
+    }
   });
 
   // These plugins provide necessary tasks.
@@ -74,8 +112,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-jade');
+  grunt.loadNpmTasks('grunt-contrib-stylus');
 
   // Default task.
-  grunt.registerTask('default', ['jshint', 'qunit', 'clean', 'concat', 'uglify']);
+  grunt.registerTask('prod', ['jshint', 'qunit', 'clean', 'concat', 'uglify']);
+  grunt.registerTask('default', ['connect', 'watch']);
 
 };
