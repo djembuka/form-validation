@@ -4,13 +4,31 @@ html
     title Demo
     link( rel="stylesheet" href="styles.css" )
     link( rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,700&subset=latin,cyrillic" )
+    script( src="/libs/jquery/jquery.js" )
+    script( src="/dist/jquery.form-validation.js" )
+    script( src="script.js" )
   body
     
     h1 Demo
     
     .b-form
       form( action="" method="get" )
+      
         .b-form-field.i-float
-          label.b-label Название компании
-          input.b-input-text( type="text" name="company" value="" required="" )
+          label.b-label Name
+          input.b-input-text( type="text" name="name" value="" required="" )
+      
+        .b-form-field.i-float
+          label.b-label Last Name
+          input.b-input-text( type="text" name="last-name" value="" required="" )
+      
+        .b-form-field.i-float
+          label.b-label Password
+          input.b-input-text( type="password" name="password" value="" required="" )
+      
+        .b-form-field.i-float
+          label.b-label Confirm Password
+          input.b-input-text( type="password" name="password-confirm" value="" required="" )
+          
+        button.b-button( type="submit" ) Submit
           

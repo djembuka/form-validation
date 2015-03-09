@@ -16,7 +16,8 @@
       inputCheckboxClass: 'b-checkbox',
       fieldBoxClass: 'b-form-field',
       warningClass: 'i-warning',
-      disabledClass: 'i-disabled'
+      disabledClass: 'i-disabled',
+      passwordMaxLength: 6
     };
     
     return this.each( function() {
@@ -95,6 +96,10 @@
   Form.prototype.isValid = function() {
     var self = this;
     
+    this.$elem.find( '.' + this.options.warningClass ).each( function() {
+      self.removeWarning( $( this ));
+    });
+    
     function check() {
       var top;
       self.submitFlag = 0;
@@ -149,8 +154,7 @@
       
       $.each( orFieldsObject, function( key ) {
         var flag = true,
-            value = $.trim( $( orFieldsObject[ key ][0] ).val() ),
-            method;
+            value = $.trim( $( orFieldsObject[ key ][0] ).val() );
             
         orFieldsObject[ key ].each( function() {
           if ( $.trim( $( this ).val() ) !== value ) {
@@ -158,10 +162,11 @@
           }
         });
         
-        method = ( flag === false ) ? 'setWarning' : 'removeWarning';
-        orFieldsObject[ key ].each( function() {
-          self[ method ]( $( this ));
-        });
+        if ( flag === false ) {
+          orFieldsObject[ key ].each( function() {
+            self.setWarning( $( this ));
+          });
+        }
       });
     }
     
@@ -177,8 +182,6 @@
         } else if ( $field.is( 'input:checkbox' )) {
           if ( !$field.is( ':checked' )) {
             self.setWarning( $field );
-          } else {
-            self.removeWarning( $field );
           }
         } else if ( $field.is( '[data-equal]' )) {
           if ( val === '' ) {
@@ -186,8 +189,6 @@
           }
         } else if ( val === '' ) {
           self.setWarning( $field );
-        } else if( !$field.is( '[type=email]' ) && !$field.is( '[type=tel]' ) && !$field.is( '[type=number]' ) && !$field.is( '[type=url]' )) {
-          self.removeWarning( $field );
         }
       });
     }
@@ -202,8 +203,6 @@
           
           if ( val !== '' && !regExp.test( val )) {
             self.setWarning( $field );
-          } else {
-            self.removeWarning( $field );
           }
         });
       }
@@ -211,13 +210,10 @@
       //check password
       self.$elem.find( 'input:visible:password' ).each( function() {
         var $field = $( this ),
-          val = $.trim( $field.val() ),
-          maxLength = 6;
+          val = $.trim( $field.val() );
         
-        if ( val.length < maxLength ) {
+        if ( val.length < self.options.passwordMaxLength ) {
           self.setWarning( $field );
-        } else {
-          self.removeWarning( $field );
         }
       });
       
@@ -256,8 +252,7 @@
       });
       
       $.each( orFieldsObject, function( key ) {
-        var counter = 0,
-            method;
+        var counter = 0;
         
         orFieldsObject[ key ].each( function() {
           if ( $.trim( $( this ).val() ) !== '' ) {
@@ -265,10 +260,11 @@
           }
         });
         
-        method = ( counter === 0 ) ? 'setWarning' : 'removeWarning';
-        orFieldsObject[ key ].each( function() {
-          self[ method ]( $( this ));
-        });
+        if ( counter === 0 ) {
+          orFieldsObject[ key ].each( function() {
+            self.setWarning( $( this ));
+          });
+        }
       });
     }
     

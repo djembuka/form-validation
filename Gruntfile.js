@@ -33,6 +33,10 @@ module.exports = function(grunt) {
         src: '<%= concat.dist.dest %>',
         dest: 'dist/jquery.<%= pkg.name %>.min.js'
       },
+      demo: {
+        src: 'src/demo/script.js',
+        dest: 'demo/script.js'
+      }
     },
     qunit: {
       files: ['test/**/*.html']
@@ -54,7 +58,7 @@ module.exports = function(grunt) {
     jade: {
       demo: {
         files: {
-          'dist/demo/index.html': 'src/demo/index.jade'
+          'demo/index.html': 'src/demo/index.jade'
         }
       }
     },
@@ -64,7 +68,7 @@ module.exports = function(grunt) {
       },
       demo: {
         files: {
-          'dist/demo/styles.css': 'src/demo/styles.styl'
+          'demo/styles.css': 'src/demo/styles.styl'
         }
       }
     },
@@ -77,7 +81,7 @@ module.exports = function(grunt) {
         tasks: ['jshint:gruntfile']
       },
       src: {
-        files: '<%= jshint.src.src %>',
+        files: [ '<%= jshint.src.src %>', '!src/demo/script.js' ],
         tasks: ['jshint:src', 'qunit']
       },
       test: {
@@ -91,6 +95,10 @@ module.exports = function(grunt) {
       css: {
         files: 'src/demo/styles.styl',
         tasks: ['stylus']
+      },
+      js: {
+        files: 'src/demo/script.js',
+        tasks: ['uglify:demo']
       }
     },
     
@@ -99,7 +107,7 @@ module.exports = function(grunt) {
         options: {
           port: 3000,
           livereload: true,
-          base: './dist/demo'
+          base: './'
         }
       }
     }
